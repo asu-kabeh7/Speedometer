@@ -3,7 +3,7 @@
 <head>
  <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>Matias Speedometer</title>
+ <title>RAGEMP Speedometer</title>
  <style>
     /* === CSS === */
     * {
@@ -506,7 +506,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Matias Dashboard</title>
+<title>Samsung Dashboard</title>
 <style>
 body {
   margin: 0;
@@ -517,7 +517,7 @@ body {
 /* ===== TABLET FRAME ===== */
 .tablet {
   position: fixed;
-  bottom: 2%;
+  bottom: 3%;
   left: 50%;
   transform: translateX(-50%) translateY(100%);
   width: 720px;
@@ -663,6 +663,48 @@ body {
   border: none;
   border-radius: 0;
 }
+
+/* ===== YOUTUBE SEARCH PANEL ===== */
+#yt-search-panel {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 80%;
+  height: 60%;
+  background: rgba(0,0,0,0.85);
+  color: white;
+  padding: 12px;
+  overflow: auto;
+  display: none;
+  border-radius: 16px;
+  z-index: 999;
+}
+
+#yt-search-panel input {
+  width: 70%;
+  padding: 6px;
+  border-radius: 6px;
+  border: none;
+}
+
+#yt-search-panel button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin-left: 6px;
+  cursor: pointer;
+}
+
+.search-item {
+  padding: 8px;
+  cursor: pointer;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+}
+
+.search-item img {
+  margin-right: 8px;
+}
 </style>
 </head>
 <body>
@@ -676,7 +718,7 @@ body {
     
     <!-- HOMEPAGE -->
     <div class="homepage" id="homePage">
-      <h1>Welcome Matias</h1>
+      <h1>Hi Matias</h1>
       <button class="home-btn" onclick="openMenu()">OPEN DASHBOARD</button>
     </div>
 
@@ -701,6 +743,14 @@ body {
       <iframe id="appIframe" src=""></iframe>
     </div>
 
+    <!-- YOUTUBE SEARCH PANEL -->
+    <div id="yt-search-panel">
+      <input type="text" id="yt-search-input" placeholder="Search YouTube...">
+      <button id="yt-search-btn">Search</button>
+      <button id="yt-search-close" style="position:absolute; top:8px; right:12px;">❌</button>
+      <div id="yt-search-results" style="margin-top:12px;"></div>
+    </div>
+
   </div>
 
   <!-- TESLA NAV BAR -->
@@ -712,46 +762,150 @@ body {
 </div>
 
 <script>
+// ===== BASIC TABLET NAV =====
 function openMenu() {
   document.getElementById("homePage").style.display = "none";
   document.getElementById("menuPage").style.display = "block";
 }
-
 function goHome() {
   document.getElementById("homePage").style.display = "flex";
   document.getElementById("menuPage").style.display = "none";
   document.getElementById("appScreen").style.display = "none";
 }
-
-function goBack() {
-  goHome();
-}
-
-// BUKA/TUTUP TABLET DENGAN STATUS BAR
+function goBack() { goHome(); }
 function toggleTablet() {
   document.getElementById("tablet").classList.toggle("show");
 }
-
 function closeTablet() {
   document.getElementById("tablet").classList.remove("show");
 }
 
-// OPEN APP EMBEDDED
+// ===== OPEN APP EMBEDDED =====
 function openApp(app) {
-  let iframe = document.getElementById('appIframe');
-  let appScreen = document.getElementById('appScreen');
+  const iframe = document.getElementById('appIframe');
+  const appScreen = document.getElementById('appScreen');
   document.getElementById('homePage').style.display = 'none';
   document.getElementById('menuPage').style.display = 'none';
   appScreen.style.display = 'flex';
   
   if(app === 'youtube') {
-    iframe.src = 'https://www.youtube.com';
+    iframe.src = "https://www.youtube.com/embed/?enablejsapi=1&rel=0";
+    TeslaYT.init();
+
+    // Tambah tombol search di YouTube
+    if(!document.getElementById('yt-search-btn-floating')){
+      const btn = document.createElement('button');
+      btn.id = 'yt-search-btn-floating';
+      btn.innerText = '🔍 Search';
+      btn.style.position = 'absolute';
+      btn.style.top = '12px';
+      btn.style.right = '12px';
+      btn.style.padding = '6px 12px';
+      btn.style.borderRadius = '8px';
+      btn.style.background = 'rgba(0,255,156,0.2)';
+      btn.style.color = 'white';
+      btn.style.border = 'none';
+      btn.style.cursor = 'pointer';
+      btn.style.zIndex = '1000';
+      btn.onclick = ()=>{ document.getElementById('yt-search-panel').style.display='block'; };
+      document.getElementById('appScreen').appendChild(btn);
+    }
+
   } else if(app === 'agro') {
     iframe.src = 'https://Agroventura.site/ladang.php';
+    // hapus tombol search kalau sebelumnya ada
+    const oldBtn = document.getElementById('yt-search-btn-floating');
+    if(oldBtn) oldBtn.remove();
   } else {
     iframe.src = 'about:blank';
+    const oldBtn = document.getElementById('yt-search-btn-floating');
+    if(oldBtn) oldBtn.remove();
   }
 }
+
+
+// ===== YOUTUBE PLAYER + SEARCH =====
+const TeslaYT = (function(){
+  let iframe = document.getElementById('appIframe');
+  let player = null;
+  let apiLoaded = false;
+
+  function loadAPI() {
+    if(apiLoaded) return;
+    apiLoaded = true;
+    const s = document.createElement('script');
+    s.src = "https://www.youtube.com/iframe_api";
+    s.async = true;
+    document.head.appendChild(s);
+  }
+
+  function createPlayer(){
+    if(!iframe) return;
+    player = new YT.Player(iframe, {
+      host: 'https://www.youtube.com',
+      videoId: '',
+      playerVars:{autoplay:0,controls:1,rel:0,playsinline:1,origin:window.location.origin,enablejsapi:1},
+      events:{
+        onReady:function(){ try{ player.setVolume(20); }catch(e){} },
+        onStateChange:function(e){ /* optional console.log(e.data) */ },
+        onError:function(e){ console.warn("YT Error:", e.data); }
+      }
+    });
+  }
+
+  function parseId(url){
+    if(!url) return null;
+    const p=[/(?:v=|vi=)([A-Za-z0-9_-]{11})/,/youtu\.be\/([A-Za-z0-9_-]{11})/,/youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/,/youtube\.com\/live\/([A-Za-z0-9_-]{11})/];
+    for(let r of p){ const m = url.match(r); if(m&&m[1]) return m[1]; }
+    const m2 = url.match(/([A-Za-z0-9_-]{11})/); return m2?m2[1]:null;
+  }
+
+  return {
+    init: function(){ loadAPI(); },
+    loadVideo: function(url){
+      const id = parseId(url);
+      if(!id) return;
+      if(player) player.loadVideoById(id);
+      else iframe.src = "https://www.youtube.com/embed/"+id+"?enablejsapi=1&rel=0&autoplay=0";
+    },
+    play: function(){ if(player) player.playVideo(); },
+    pause:function(){ if(player) player.pauseVideo(); },
+    setVolume:function(v){
+      if(player){ v=Math.max(0,Math.min(100,parseInt(v||0))); player.setVolume(v); if(v===0 && player.mute) player.mute(); else if(v>0 && player.unMute) player.unMute(); }
+    },
+    searchPanel:function(){ document.getElementById('yt-search-panel').style.display='block'; }
+  };
+})();
+
+// ===== YOUTUBE SEARCH PANEL =====
+(function(){
+  const input = document.getElementById('yt-search-input');
+  const btn = document.getElementById('yt-search-btn');
+  const results = document.getElementById('yt-search-results');
+  const closeBtn = document.getElementById('yt-search-close');
+  const API_KEY = "AIzaSyBlRhTTd2jWkk5tG570qRFyuhRKqWnGgL0Y"; // ganti sendiri
+
+  closeBtn.addEventListener('click', ()=>{ document.getElementById('yt-search-panel').style.display='none'; });
+
+  function makeItem(video){
+    const div = document.createElement('div'); div.className='search-item';
+    div.innerHTML = `<img src="${video.snippet.thumbnails.default.url}"><span>${video.snippet.title}</span>`;
+    div.onclick = ()=>{ TeslaYT.loadVideo(video.id.videoId); document.getElementById('yt-search-panel').style.display='none'; };
+    return div;
+  }
+
+  async function searchYT(q){
+    results.innerHTML="Loading...";
+    try{
+      const resp = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(q)}&key=${API_KEY}`);
+      const data = await resp.json();
+      results.innerHTML = "";
+      (data.items||[]).forEach(v=>{ results.appendChild(makeItem(v)); });
+    }catch(e){ results.innerHTML="Error"; console.warn(e); }
+  }
+
+  btn.addEventListener('click', ()=>{ const q=input.value.trim(); if(q) searchYT(q); });
+})();
 </script>
 
 </body>
