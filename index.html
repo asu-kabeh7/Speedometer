@@ -1,1073 +1,822 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
- <meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>Speedometer</title>
- <style>
-    /* === CSS === */
-    * {
-        user-select: none;
-        user-drag: none;
-        box-sizing: border-box;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAGEMP Speedometer & Tablet</title>
+    <style>
+        /* === CSS DASAR === */
+        * {
+            user-select: none;
+            user-drag: none;
+            box-sizing: border-box;
+        }
 
-    body {
-        background-color: transparent !important;
-        font-family: 'Arial', sans-serif;
-        overflow: hidden;
-        margin: 0;
-    }
+        body {
+            background-color: transparent !important;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            margin: 0;
+        }
 
-    .widget-wrapper {
-        position: fixed;
-        bottom: 15px;
-        right: 40px;
-        width: 240px;
-        height: 240px;
-        transform: scale(0.85);
-        transform-origin: bottom right;
-    }
+        /* === SPEEDOMETER STYLES === */
+        .widget-wrapper {
+            position: fixed;
+            bottom: 15px;
+            right: 40px;
+            width: 240px;
+            height: 240px;
+            transform: scale(0.85);
+            transform-origin: bottom right;
+        }
 
-    .speedometer, .side-gauges, .rpm-bars {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-    }
+        .speedometer, .side-gauges, .rpm-bars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
 
-    .speedometer {
-        background: radial-gradient(circle, #1e3a5f 0%, #0a1929 100%);
-        border-radius: 50%;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.7), inset 0 0 30px rgba(0,0,0,0.5);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 1;
-    }
+        .speedometer {
+            background: radial-gradient(circle, #1e3a5f 0%, #0a1929 100%);
+            border-radius: 50%;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.7), inset 0 0 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
 
-    .gear-container {
-        position: absolute;
-        top: 52px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 2;
-    }
-    .gear-circle {
-        width: 24px;
-        height: 24px;
-        background: radial-gradient(circle, #3b82f6 0%, #1d4ed8 80%);
-        border-radius: 50%;
-        box-shadow: 0 0 8px rgba(59, 130, 246, 0.7), inset 0 1px 3px rgba(255,255,255,0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 1.2px solid rgba(255,255,255,0.3);
-    }
-    #gearValue {
-        font-size: 12px;
-        font-weight: bold;
-        color: #ffffff;
-        text-shadow: 0 0 4px rgba(255,255,255,0.7);
-    }
+        .gear-container {
+            position: absolute;
+            top: 52px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+        .gear-circle {
+            width: 24px;
+            height: 24px;
+            background: radial-gradient(circle, #3b82f6 0%, #1d4ed8 80%);
+            border-radius: 50%;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.7), inset 0 1px 3px rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1.2px solid rgba(255,255,255,0.3);
+        }
+        #gearValue {
+            font-size: 12px;
+            font-weight: bold;
+            color: #ffffff;
+            text-shadow: 0 0 4px rgba(255,255,255,0.7);
+        }
 
-    .rpm-bars {
-        z-index: 4;
-        overflow: visible;
-    }
-    .rpm-track {
-        fill: none;
-        stroke: rgba(255, 255, 255, 0.1);
-        stroke-width: 10;
-        stroke-linecap: round;
-    }
-    .rpm-progress {
-        fill: none;
-        stroke: #ffffff;
-        stroke-width: 10;
-        stroke-linecap: round;
-        filter: drop-shadow(0 0 8px #ffffff);
-    }
+        .rpm-bars {
+            z-index: 4;
+            overflow: visible;
+        }
+        .rpm-track {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 10;
+            stroke-linecap: round;
+        }
+        .rpm-progress {
+            fill: none;
+            stroke: #ffffff;
+            stroke-width: 10;
+            stroke-linecap: round;
+            filter: drop-shadow(0 0 8px #ffffff);
+        }
 
-    .scale-marks { position: absolute; width: 100%; height: 100%; pointer-events: none; }
-    .scale-mark {
-        position: absolute; width: 1.5px; height: 9px; background: #475569;
-        left: 50%; top: 11px; transform-origin: 50% 109px;
-    }
-    .scale-mark.major { height: 14px; width: 2.5px; background: #64748b; }
-    .scale-number {
-        position: absolute; color: #94a3b8; font-size: 10px;
-        font-weight: 600; transform: translate(-50%, -50%);
-    }
+        .scale-marks { position: absolute; width: 100%; height: 100%; pointer-events: none; }
+        .scale-mark {
+            position: absolute; width: 1.5px; height: 9px; background: #475569;
+            left: 50%; top: 11px; transform-origin: 50% 109px;
+        }
+        .scale-mark.major { height: 14px; width: 2.5px; background: #64748b; }
+        .scale-number {
+            position: absolute; color: #94a3b8; font-size: 10px;
+            font-weight: 600; transform: translate(-50%, -50%);
+        }
 
-    .speed-display {
-        text-align: center;
-        z-index: 2;
-        margin-top: 12px;
-    }
-    .speed-value {
-        font-size: 60px;
-        font-weight: bold;
-        color: white;
-        text-shadow: 0 0 15px rgba(255,255,255,0.5);
-        line-height: 1;
-        margin-bottom: 4px;
-    }
-    .speed-unit {
-        font-size: 12px;
-        color: #94a3b8;
-        letter-spacing: 1.5px;
-        font-weight: 600;
-    }
+        .speed-display {
+            text-align: center;
+            z-index: 2;
+            margin-top: 12px;
+        }
+        .speed-value {
+            font-size: 60px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 15px rgba(255,255,255,0.5);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .speed-unit {
+            font-size: 12px;
+            color: #94a3b8;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
 
-    .rpm-text-display {
-        position: absolute;
-        bottom: 52px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0,0,0,0.4);
-        padding: 4px 10px;
-        border-radius: 16px;
-        font-size: 10px;
-        color: #94a3b8;
-        z-index: 2;
-        white-space: nowrap;
-    }
-    
-    .side-gauges { z-index: 3; }
-    .arc-gauge {
-        position: absolute; width: 240px; height: 240px; top: 0; left: -26px;
-    }
-    #engineGauge { left: auto; right: -26px; }
-    .arc-gauge path { fill: none; stroke-width: 12; stroke-linecap: round; }
-    .arc-gauge .arc-track { stroke: #374151; }
-    .arc-gauge .arc-progress { transition: stroke-dashoffset 0.3s ease-out, stroke 0.3s ease; }
-    .arc-progress.white { stroke: #e2e8f0; }
-    .arc-progress.yellow { stroke: #fbbf24; }
-    .arc-progress.red { stroke: #ef4444; animation: warning-pulse 1s ease-in-out infinite; }
-    @keyframes warning-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .rpm-text-display {
+            position: absolute;
+            bottom: 52px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.4);
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 10px;
+            color: #94a3b8;
+            z-index: 2;
+            white-space: nowrap;
+        }
+        
+        .side-gauges { z-index: 3; }
+        .arc-gauge {
+            position: absolute; width: 240px; height: 240px; top: 0; left: -26px;
+        }
+        #engineGauge { left: auto; right: -26px; }
+        .arc-gauge path { fill: none; stroke-width: 12; stroke-linecap: round; }
+        .arc-gauge .arc-track { stroke: #374151; }
+        .arc-gauge .arc-progress { transition: stroke-dashoffset 0.3s ease-out, stroke 0.3s ease; }
+        .arc-progress.white { stroke: #e2e8f0; }
+        .arc-progress.yellow { stroke: #fbbf24; }
+        .arc-progress.red { stroke: #ef4444; animation: warning-pulse 1s ease-in-out infinite; }
+        @keyframes warning-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-    /* ================== STYLING IKON BARU ================== */
-    .bottom-icons {
-        position: absolute;
-        bottom: 25px;
-        left: 50%;
-        transform: translateX(-50%);
-        display: flex;
-        gap: 7px;
-        align-items: center;
-        justify-content: center;
-        z-index: 2;
-    }
-    .indicator-icon {
-        width: 20px;
-        height: 20px;
-    }
-    .indicator-icon img {
-        width: 100%;
-        height: 100%;
-        filter: invert(1) brightness(0.7);
-        opacity: 0.4;
-        transition: filter 0.3s, opacity 0.3s;
-    }
-    .left-indicator img {
-        transform: scaleX(-1);
-    }
-    
-    .seatbelt-icon.on img,
-    .headlights-icon.on img,
-    .left-indicator.on img, 
-    .right-indicator.on img {
-        opacity: 1;
-        filter: invert(53%) sepia(94%) saturate(2335%) hue-rotate(179deg) brightness(95%) contrast(96%) drop-shadow(0 0 6px #3b82f6);
-    }
-    .headlights-icon.high-beam img {
-        filter: invert(53%) sepia(94%) saturate(2335%) hue-rotate(179deg) brightness(110%) contrast(100%) drop-shadow(0 0 8px #3b82f6);
-    }
-    
-    @keyframes blink-img { 50% { opacity: 0.3; } }
-    .blinking img { animation: blink-img 0.8s step-end infinite; }
+        .bottom-icons {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 7px;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        .indicator-icon {
+            width: 20px;
+            height: 20px;
+        }
+        .indicator-icon img {
+            width: 100%;
+            height: 100%;
+            filter: invert(1) brightness(0.7);
+            opacity: 0.4;
+            transition: filter 0.3s, opacity 0.3s;
+        }
+        .left-indicator img {
+            transform: scaleX(-1);
+        }
+        
+        .seatbelt-icon.on img,
+        .headlights-icon.on img,
+        .left-indicator.on img, 
+        .right-indicator.on img {
+            opacity: 1;
+            filter: invert(53%) sepia(94%) saturate(2335%) hue-rotate(179deg) brightness(95%) contrast(96%) drop-shadow(0 0 6px #3b82f6);
+        }
+        .headlights-icon.high-beam img {
+            filter: invert(53%) sepia(94%) saturate(2335%) hue-rotate(179deg) brightness(110%) contrast(100%) drop-shadow(0 0 8px #3b82f6);
+        }
+        
+        @keyframes blink-img { 50% { opacity: 0.3; } }
+        .blinking img { animation: blink-img 0.8s step-end infinite; }
 
-    /* Ikon Atas (Fuel & Engine) */
-    .top-icon {
-        position: absolute;
-        z-index: 5;
-        transform: translateX(-50%);
-    }
-    .top-icon img {
-        width: 100%;
-        height: 100%;
-        transition: filter 0.3s, opacity 0.3s;
-    }
-    #fuelIcon { width: 22px; height: 22px; top: 1px; left: 30px; }
-    #fuelIcon img {
-        filter: invert(1) drop-shadow(0 1px 2px rgba(0,0,0,0.7));
-    }
-    #healthIcon {
-        width: 30px;
-        height: 30px;
-        top: 0px;
-        left: 210px;
-    }
-    #healthIcon img {
-        filter: invert(1) brightness(0.7) drop-shadow(0 1px 2px rgba(0,0,0,0.7));
-        opacity: 0.6;
-    }
-    #healthIcon.engine-on img {
-        filter: invert(1) brightness(1.1) drop-shadow(0 1px 3px rgba(255,255,255,0.4));
-        opacity: 1;
-    }
-    /* ======================================================= */
- </style>
+        .top-icon {
+            position: absolute;
+            z-index: 5;
+            transform: translateX(-50%);
+        }
+        .top-icon img {
+            width: 100%;
+            height: 100%;
+            transition: filter 0.3s, opacity 0.3s;
+        }
+        #fuelIcon { width: 22px; height: 22px; top: 1px; left: 30px; }
+        #fuelIcon img {
+            filter: invert(1) drop-shadow(0 1px 2px rgba(0,0,0,0.7));
+        }
+        #healthIcon {
+            width: 30px;
+            height: 30px;
+            top: 0px;
+            left: 210px;
+        }
+        #healthIcon img {
+            filter: invert(1) brightness(0.7) drop-shadow(0 1px 2px rgba(0,0,0,0.7));
+            opacity: 0.6;
+        }
+        #healthIcon.engine-on img {
+            filter: invert(1) brightness(1.1) drop-shadow(0 1px 3px rgba(255,255,255,0.4));
+            opacity: 1;
+        }
+
+        /* === TABLET STYLES === */
+        .tablet {
+            position: fixed;
+            bottom: 3%;
+            left: 50%;
+            transform: translateX(-50%) translateY(100%);
+            width: 720px;
+            height: 420px;
+            background: #0b0f1a;
+            border-radius: 28px;
+            border: 3px solid #1f2937;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+            overflow: hidden;
+            z-index: 9999;
+            transition: transform 0.4s ease;
+        }
+
+        .tablet.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .status-bar {
+            height: 32px;
+            background: linear-gradient(90deg, #000, #0f172a);
+            color: #9ca3af;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 14px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .screen {
+            width: 100%;
+            height: calc(100% - 72px);
+            position: relative;
+            background: url('https://images.unsplash.com/photo-1518770660439-4636190af475') center/cover;
+        }
+
+        .homepage, .app-screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(6px);
+            background: rgba(0,0,0,0.4);
+            transition: 0.4s;
+        }
+
+        .homepage h1 { color: white; font-size: 28px; letter-spacing: 2px; }
+
+        .home-btn {
+            margin-top: 16px;
+            padding: 12px 28px;
+            border-radius: 30px;
+            border: none;
+            background: linear-gradient(135deg, #00ff9c, #00b4ff);
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .home-btn:hover { transform: scale(1.05); }
+
+        .menu {
+            position: absolute;
+            inset: 0;
+            display: none;
+            padding: 20px;
+            color: white;
+            overflow-y: auto;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .app {
+            background: rgba(255,255,255,0.08);
+            border-radius: 18px;
+            padding: 16px;
+            text-align: center;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+
+        .app:hover {
+            background: rgba(0,255,156,0.2);
+            transform: translateY(-4px);
+        }
+
+        .app i { font-size: 28px; display: block; margin-bottom: 8px; }
+
+        .dock {
+            height: 40px;
+            background: linear-gradient(90deg, #020617, #020617);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            border-top: 1px solid #1f2937;
+        }
+
+        .nav-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .nav-btn:hover { background: rgba(0,255,156,0.3); color: #00ff9c; }
+
+        .app-screen iframe { width: 100%; height: 100%; border: none; border-radius: 0; }
+
+        #yt-search-panel {
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 80%;
+            height: 60%;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 12px;
+            overflow: auto;
+            display: none;
+            border-radius: 16px;
+            z-index: 999;
+        }
+
+        #yt-search-panel input { width: 70%; padding: 6px; border-radius: 6px; border: none; }
+        #yt-search-panel button { padding: 6px 12px; border-radius: 6px; margin-left: 6px; cursor: pointer; }
+
+        .search-item {
+            padding: 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+        }
+        .search-item img { margin-right: 8px; }
+
+        /* === THEMES === */
+        body.theme-cyberpunk .speedometer { background: radial-gradient(circle,#2b0033 0%,#000000 100%) !important; }
+        body.theme-cyberpunk .speed-value { color:#ff00ff !important; text-shadow:0 0 20px #ff00ff !important; }
+        body.theme-cyberpunk .rpm-progress { stroke:#ff00ff !important; filter:drop-shadow(0 0 10px #ff00ff); }
+        body.theme-cyberpunk .screen { background:url('https://img.freepik.com/free-photo/illustration-rain-futuristic-city_23-2151406566.jpg?semt=ais_hybrid&w=740&q=80') center/cover !important; }
+
+        body.theme-soft .speedometer { background: radial-gradient(circle,#ffe4f2 0%,#ffc2e2 100%) !important; }
+        body.theme-soft .speed-value { color:#ff69b4 !important; text-shadow:0 0 15px #ff69b4 !important; }
+        body.theme-soft .rpm-progress { stroke:#ff69b4 !important; }
+        body.theme-soft .screen { background:url('https://www.pixelstalk.net/wp-content/uploads/images6/Girly-Desktop-Wallpaper-Cute.jpg') center/cover !important; }
+
+        body.theme-matias .speedometer { background: radial-gradient(circle,#0f2027,#203a43,#2c5364) !important; }
+        body.theme-matias .speed-value { color:#020202 !important; text-shadow:0 0 15px #38bdf8; }
+        body.theme-matias .rpm-progress { stroke:#283825 !important; }
+        body.theme-matias .screen { background:url('https://p4.wallpaperbetter.com/wallpaper/214/127/766/card-casino-the-magician-hd-wallpaper-preview.jpg') center/cover !important; }
+
+        body.theme-midnight .speedometer { background: radial-gradient(circle,#0f2027,#203a43,#2c5364) !important; }
+        body.theme-midnight .speed-value { color:#38bdf8 !important; text-shadow:0 0 15px #38bdf8; }
+        body.theme-midnight .rpm-progress { stroke:#38bdf8 !important; }
+        body.theme-midnight .screen { background:url('https://c4.wallpaperflare.com/wallpaper/998/700/928/anime-art-boat-night-water-wallpaper-preview.jpg') center/cover !important; }
+
+        body.theme-blood .speedometer { background: radial-gradient(circle,#3b0000,#000000) !important; }
+        body.theme-blood .speed-value { color:#ff0000 !important; text-shadow:0 0 20px #ff0000; }
+        body.theme-blood .rpm-progress { stroke:#ff0000 !important; }
+        body.theme-blood .screen { background:url('https://c4.wallpaperflare.com/wallpaper/84/210/374/soviet-union-ussr-war-artwork-wallpaper-preview.jpg') center/cover !important; }
+
+        .theme-option {
+            margin:10px 0;
+            padding:12px;
+            background:rgba(255,255,255,0.08);
+            border-radius:12px;
+            text-align:center;
+            cursor:pointer;
+            transition:0.2s;
+        }
+        .theme-option:hover { background:rgba(0,255,156,0.3); }
+        #settingsScreen { overflow-y: auto; }
+    </style>
 </head>
 <body>
- <div class="widget-wrapper">
-    <div class="speedometer">
-        <div class="scale-marks" id="scaleMarks"></div>
-        <div class="gear-container">
-            <div class="gear-circle">
-                <div class="gear-display" id="gearValue">N</div>
+
+    <div class="widget-wrapper">
+        <div class="speedometer">
+            <div class="scale-marks" id="scaleMarks"></div>
+            <div class="gear-container">
+                <div class="gear-circle">
+                    <div class="gear-display" id="gearValue">N</div>
+                </div>
+            </div>
+            <div class="speed-display">
+                <div class="speed-value" id="speedValue">0</div>
+                <div class="speed-unit" id="speedUnit">MPH</div>
+            </div>
+            <div class="rpm-text-display">RPM x1000</div>
+            
+            <div class="bottom-icons">
+                <div class="indicator-icon left-indicator" id="leftIndicator">
+                    <img src="https://cdn3.iconfinder.com/data/icons/arrow-outline-8/32/right-512.png" alt="Left Indicator">
+                </div>
+                <div class="indicator-icon seatbelt-icon" id="seatbeltIcon">
+                    <img src="https://cdn3.iconfinder.com/data/icons/iconpark-vol-4/48/belt-256.png" alt="Seatbelt">
+                </div>
+                <div class="indicator-icon headlights-icon" id="headlightsIcon">
+                    <img src="https://cdn0.iconfinder.com/data/icons/phosphor-light-vol-3/256/headlights-light-256.png" alt="Headlights">
+                </div>
+                <div class="indicator-icon right-indicator" id="rightIndicator">
+                    <img src="https://cdn3.iconfinder.com/data/icons/arrow-outline-8/32/right-512.png" alt="Right Indicator">
+                </div>
             </div>
         </div>
-        <div class="speed-display">
-            <div class="speed-value" id="speedValue">0</div>
-            <div class="speed-unit" id="speedUnit">MPH</div>
+
+        <div class="side-gauges">
+            <svg class="arc-gauge" id="fuelGauge" viewBox="0 0 240 240">
+                <path class="arc-track" d="M 41,206 A 124,124 0 0 1 41,34"/>
+                <path class="arc-progress white" id="fuelProgress" d="M 41,206 A 124,124 0 0 1 41,34"/>
+            </svg>
+            <svg class="arc-gauge" id="engineGauge" viewBox="0 0 240 240">
+                <path class="arc-track" d="M 199,206 A 124,124 0 0 0 199,34"/>
+                <path class="arc-progress white" id="engineProgress" d="M 199,206 A 124,124 0 0 0 199,34"/>
+            </svg>
+            <div class="top-icon" id="fuelIcon">
+                <img src="https://cdn0.iconfinder.com/data/icons/minimal-set-seven/32/minimal-47-256.png" alt="Fuel">
+            </div>
+            <div class="top-icon" id="healthIcon">
+                <img src="https://cdn4.iconfinder.com/data/icons/tabler-vol-3/24/engine-256.png" alt="Engine/Health">
+            </div>
         </div>
-        <div class="rpm-text-display">RPM x1000</div>
         
-        <div class="bottom-icons">
-            <div class="indicator-icon left-indicator" id="leftIndicator">
-                <img src="https://cdn3.iconfinder.com/data/icons/arrow-outline-8/32/right-512.png" alt="Left Indicator">
+        <svg class="rpm-bars" viewBox="0 0 240 240" id="rpmBars"></svg>
+    </div>
+
+    <div class="tablet" id="tablet">
+        <div class="status-bar" onclick="toggleTablet()">Matias • Store 🔋 100% • 📶 5G</div>
+
+        <div class="screen">
+            <div class="app-screen" id="settingsScreen" style="display:none;flex-direction:column;padding:20px;color:white;">
+                <h2>Theme Settings</h2>
+                <div class="theme-option" onclick="setTheme('theme-dark')">🌙 Dark Default</div>
+                <div class="theme-option" onclick="setTheme('theme-cyberpunk')">🩸 Cyberpunk</div>
+                <div class="theme-option" onclick="setTheme('theme-soft')">🌸 Soft Aesthetic</div>
+                <div class="theme-option" onclick="setTheme('theme-matias')">🖕 Matias Special</div>
+                <div class="theme-option" onclick="setTheme('theme-midnight')">🌌 Midnight Blue</div>
+                <div class="theme-option" onclick="setTheme('theme-blood')">🩸 Blood Red</div>
             </div>
-            <div class="indicator-icon seatbelt-icon" id="seatbeltIcon">
-                <img src="https://cdn3.iconfinder.com/data/icons/iconpark-vol-4/48/belt-256.png" alt="Seatbelt">
+
+            <div class="homepage" id="homePage">
+                <h1>Hi Matias</h1>
+                <button class="home-btn" onclick="openMenu()">OPEN DASHBOARD</button>
             </div>
-            <div class="indicator-icon headlights-icon" id="headlightsIcon">
-                <img src="https://cdn0.iconfinder.com/data/icons/phosphor-light-vol-3/256/headlights-light-256.png" alt="Headlights">
+
+            <div class="menu" id="menuPage">
+                <div class="menu-grid">
+                    <div class="app" onclick="openApp('vehicle')">🚗<br>Vehicle</div>
+                    <div class="app" onclick="openApp('gps')">🗺️<br>GPS</div>
+                    <div class="app" onclick="openApp('music')">🎵<br>Music</div>
+                    <div class="app" onclick="openApp('phone')">📞<br>Phone</div>
+                    <div class="app" onclick="openApp('settings')">⚙️<br>Settings</div>
+                    <div class="app" onclick="openApp('chat')">💬<br>Chat</div>
+                    <div class="app" onclick="openApp('radio')">📡<br>Radio</div>
+                    <div class="app" onclick="openApp('camera')">📷<br>Camera</div>
+                    <div class="app" onclick="openApp('youtube')">▶️<br>YouTube</div>
+                    <div class="app" onclick="openApp('agro')">🌱<br>Agroventura</div>
+                </div>
             </div>
-            <div class="indicator-icon right-indicator" id="rightIndicator">
-                <img src="https://cdn3.iconfinder.com/data/icons/arrow-outline-8/32/right-512.png" alt="Right Indicator">
+
+            <div class="app-screen" id="appScreen" style="display:none;">
+                <iframe id="appIframe" src=""></iframe>
             </div>
+
+            <div id="yt-search-panel">
+                <input type="text" id="yt-search-input" placeholder="Search YouTube...">
+                <button id="yt-search-btn">Search</button>
+                <button id="yt-search-close" style="position:absolute; top:8px; right:12px;">❌</button>
+                <div id="yt-search-results" style="margin-top:12px;"></div>
+            </div>
+        </div>
+
+        <div class="dock">
+            <div class="nav-btn" onclick="goBack()">⟵</div>
+            <div class="nav-btn" onclick="goHome()">●</div>
+            <div class="nav-btn" onclick="closeTablet()">▢</div>
         </div>
     </div>
 
-    <div class="side-gauges">
-        <svg class="arc-gauge" id="fuelGauge" viewBox="0 0 240 240">
-            <path class="arc-track" d="M 41,206 A 124,124 0 0 1 41,34"/>
-            <path class="arc-progress white" id="fuelProgress" d="M 41,206 A 124,124 0 0 1 41,34"/>
-        </svg>
-        <svg class="arc-gauge" id="engineGauge" viewBox="0 0 240 240">
-            <path class="arc-track" d="M 199,206 A 124,124 0 0 0 199,34"/>
-            <path class="arc-progress white" id="engineProgress" d="M 199,206 A 124,124 0 0 0 199,34"/>
-        </svg>
-        <div class="top-icon" id="fuelIcon">
-            <img src="https://cdn0.iconfinder.com/data/icons/minimal-set-seven/32/minimal-47-256.png" alt="Fuel">
-        </div>
-        <div class="top-icon" id="healthIcon">
-            <img src="https://cdn4.iconfinder.com/data/icons/tabler-vol-3/24/engine-256.png" alt="Engine/Health">
-        </div>
-    </div>
-    
-    <svg class="rpm-bars" viewBox="0 0 240 240" id="rpmBars"></svg>
- </div>
+    <script>
+        // === SPEEDOMETER LOGIC ===
+        let elements = {};
+        const SIZE = 240;
+        const CENTER = SIZE / 2;
+        const RPM_RADIUS = 114;
+        const NUMBER_RADIUS = 84;
 
- <script>
-    // === JAVASCRIPT ===
-    let elements = {};
-    const SIZE = 240;
-    const CENTER = SIZE / 2;
-    const RPM_RADIUS = 114;
-    const NUMBER_RADIUS = 84;
+        let currentRPM = 0;
+        let targetRPM = 0;
+        let speedMode = 1;
+        let rawSpeedInMetersPerSecond = 0;
+        let isEngineOn = false;
 
-    // Variabel state
-    let currentRPM = 0;
-    let targetRPM = 0;
-    let speedMode = 1;
-    let rawSpeedInMetersPerSecond = 0;
-    let isEngineOn = false;
+        const RPM_SMOOTHNESS = 0.12;
+        const IDLE_FLUCTUATION_AMOUNT = 0.015;
+        const IDLE_FLUCTUATION_SPEED = 0.006;
 
-    // Pengaturan untuk animasi idle
-    const RPM_SMOOTHNESS = 0.12;
-    const IDLE_FLUCTUATION_AMOUNT = 0.015; // Getaran ±150 RPM
-    const IDLE_FLUCTUATION_SPEED = 0.006;  // Kecepatan getaran
-
-    function initializeUI() {
-        elements = {
-            speedValue: document.getElementById('speedValue'),
-            speedUnit: document.getElementById('speedUnit'),
-            gearValue: document.getElementById('gearValue'),
-            fuelProgress: document.getElementById('fuelProgress'),
-            engineProgress: document.getElementById('engineProgress'),
-            rpmBars: document.getElementById('rpmBars'),
-            seatbeltIcon: document.getElementById('seatbeltIcon'),
-            headlightsIcon: document.getElementById('headlightsIcon'),
-            leftIndicator: document.getElementById('leftIndicator'),
-            rightIndicator: document.getElementById('rightIndicator'),
-            healthIcon: document.getElementById('healthIcon')
-        };
-
-        elements.fuelArcLength = elements.fuelProgress.getTotalLength();
-        elements.engineArcLength = elements.engineProgress.getTotalLength();
-        elements.fuelProgress.style.strokeDasharray = elements.fuelArcLength;
-        elements.engineProgress.style.strokeDasharray = elements.engineArcLength;
-
-        generateRPMBar();
-        generateScaleMarks();
-        requestAnimationFrame(updateRPMAnimation);
-    }
-
-    function generateRPMBar() {
-        const svg = elements.rpmBars;
-        const startAngle = -135, sweepAngle = 270, endAngle = startAngle + sweepAngle;
-
-        const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
-            const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
-            return {
-                x: centerX + (radius * Math.cos(angleInRadians)),
-                y: centerY + (radius * Math.sin(angleInRadians))
+        function initializeUI() {
+            elements = {
+                speedValue: document.getElementById('speedValue'),
+                speedUnit: document.getElementById('speedUnit'),
+                gearValue: document.getElementById('gearValue'),
+                fuelProgress: document.getElementById('fuelProgress'),
+                engineProgress: document.getElementById('engineProgress'),
+                rpmBars: document.getElementById('rpmBars'),
+                seatbeltIcon: document.getElementById('seatbeltIcon'),
+                headlightsIcon: document.getElementById('headlightsIcon'),
+                leftIndicator: document.getElementById('leftIndicator'),
+                rightIndicator: document.getElementById('rightIndicator'),
+                healthIcon: document.getElementById('healthIcon')
             };
-        };
 
-        const describeArc = (x, y, radius, startAngle, endAngle) => {
-            const start = polarToCartesian(x, y, radius, startAngle);
-            const end = polarToCartesian(x, y, radius, endAngle);
-            const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-            return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
-        };
+            elements.fuelArcLength = elements.fuelProgress.getTotalLength();
+            elements.engineArcLength = elements.engineProgress.getTotalLength();
+            elements.fuelProgress.style.strokeDasharray = elements.fuelArcLength;
+            elements.engineProgress.style.strokeDasharray = elements.engineArcLength;
 
-        const pathData = describeArc(CENTER, CENTER, RPM_RADIUS, startAngle, endAngle);
-        const track = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        track.setAttribute('d', pathData);
-        track.setAttribute('class', 'rpm-track');
-        svg.appendChild(track);
-
-        const progress = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        progress.setAttribute('d', pathData);
-        progress.setAttribute('class', 'rpm-progress');
-        const length = progress.getTotalLength();
-        progress.style.strokeDasharray = length;
-        progress.style.strokeDashoffset = length;
-        
-        elements.rpmSolidBar = progress;
-        elements.rpmFullLength = length;
-        svg.appendChild(progress);
-    }
-
-    function generateScaleMarks() {
-        const scaleMarks = document.getElementById('scaleMarks');
-        const totalMarks = 10, startAngle = -135, sweepAngle = 270;
-
-        for (let i = 0; i < totalMarks; i++) {
-            const angleDeg = startAngle + (i * sweepAngle / (totalMarks - 1));
-            const mark = document.createElement('div');
-            mark.className = 'scale-mark major';
-            mark.style.transform = `translateX(-50%) rotate(${angleDeg}deg)`;
-            scaleMarks.appendChild(mark);
-
-            const number = document.createElement('div');
-            number.className = 'scale-number';
-            number.textContent = i + 1;
-            const angleRad = (angleDeg - 90) * Math.PI / 180;
-            const x = CENTER + NUMBER_RADIUS * Math.cos(angleRad);
-            const y = CENTER + NUMBER_RADIUS * Math.sin(angleRad);
-            number.style.left = `${x}px`;
-            number.style.top = `${y}px`;
-            scaleMarks.appendChild(number);
+            generateRPMBar();
+            generateScaleMarks();
+            requestAnimationFrame(updateRPMAnimation);
         }
-    }
 
-    // ================== FUNGSI ANIMASI RPM DIPERBARUI (FINAL V3) ==================
-    function updateRPMAnimation() {
-        let finalRPMToShow;
-        
-        // Cek kondisi untuk animasi idle
-        const isIdle = isEngineOn && rawSpeedInMetersPerSecond < 0.1 && targetRPM < 0.15;
+        function generateRPMBar() {
+            const svg = elements.rpmBars;
+            const startAngle = -135, sweepAngle = 270, endAngle = startAngle + sweepAngle;
 
-        if (isIdle) {
-            // JIKA IDLE: Buat getaran di sekitar nilai idle dari game.
-            // Smoothing diabaikan agar animasi terlihat jelas.
-            const idleFluctuation = Math.sin(Date.now() * IDLE_FLUCTUATION_SPEED) * IDLE_FLUCTUATION_AMOUNT;
-            finalRPMToShow = targetRPM + idleFluctuation;
+            const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
+                const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+                return {
+                    x: centerX + (radius * Math.cos(angleInRadians)),
+                    y: centerY + (radius * Math.sin(angleInRadians))
+                };
+            };
 
-            // Penting: Update 'currentRPM' agar transisi keluar dari idle tetap mulus.
-            currentRPM = finalRPMToShow;
-        } else {
-            // JIKA TIDAK IDLE: Gunakan logika smoothing seperti biasa.
-            currentRPM += (targetRPM - currentRPM) * RPM_SMOOTHNESS;
-            finalRPMToShow = currentRPM;
+            const describeArc = (x, y, radius, startAngle, endAngle) => {
+                const start = polarToCartesian(x, y, radius, startAngle);
+                const end = polarToCartesian(x, y, radius, endAngle);
+                const largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+                return `M ${start.x} ${start.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`;
+            };
+
+            const pathData = describeArc(CENTER, CENTER, RPM_RADIUS, startAngle, endAngle);
+            const track = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            track.setAttribute('d', pathData);
+            track.setAttribute('class', 'rpm-track');
+            svg.appendChild(track);
+
+            const progress = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            progress.setAttribute('d', pathData);
+            progress.setAttribute('class', 'rpm-progress');
+            const length = progress.getTotalLength();
+            progress.style.strokeDasharray = length;
+            progress.style.strokeDashoffset = length;
+            
+            elements.rpmSolidBar = progress;
+            elements.rpmFullLength = length;
+            svg.appendChild(progress);
         }
-        
-        // Pastikan nilai tidak keluar batas (0-1) sebelum menggambar bar.
-        finalRPMToShow = Math.max(0, Math.min(1, finalRPMToShow));
-        if (elements.rpmSolidBar) {
-            const offset = elements.rpmFullLength * (1 - finalRPMToShow);
-            elements.rpmSolidBar.style.strokeDashoffset = offset;
-        }
-        
-        requestAnimationFrame(updateRPMAnimation);
-    }
-    // =========================================================================
 
-    // --- RAGEMP API FUNCTIONS ---
+        function generateScaleMarks() {
+            const scaleMarks = document.getElementById('scaleMarks');
+            const totalMarks = 10, startAngle = -135, sweepAngle = 270;
 
-    function setEngine(state) {
-        isEngineOn = state;
-        elements.healthIcon.classList.toggle('engine-on', state);
-    }
+            for (let i = 0; i < totalMarks; i++) {
+                const angleDeg = startAngle + (i * sweepAngle / (totalMarks - 1));
+                const mark = document.createElement('div');
+                mark.className = 'scale-mark major';
+                mark.style.transform = `translateX(-50%) rotate(${angleDeg}deg)`;
+                scaleMarks.appendChild(mark);
 
-    function setSpeed(speed) {
-        rawSpeedInMetersPerSecond = speed;
-        let convertedSpeed = 0;
-        let unit = 'KMH';
-        switch(speedMode) {
-            case 1:
-                convertedSpeed = Math.round(speed * 2.236936);
-                unit = 'MPH';
-                break;
-            case 2:
-                convertedSpeed = Math.round(speed * 1.943844);
-                unit = 'Knots';
-                break;
-            default:
-                convertedSpeed = Math.round(speed * 3.6);
-                unit = 'KMH';
-        }
-        elements.speedValue.innerText = convertedSpeed;
-        elements.speedUnit.innerText = unit;
-    }
-
-    function setRPM(rpm) {
-        targetRPM = Math.max(0, Math.min(1, rpm));
-    }
-
-    function setFuel(fuel) {
-        const offset = elements.fuelArcLength * (1 - fuel);
-        elements.fuelProgress.className = `arc-progress ${fuel < 0.2 ? 'red' : fuel < 0.5 ? 'yellow' : 'white'}`;
-        elements.fuelProgress.style.strokeDashoffset = offset;
-    }
-
-    function setHealth(health) {
-        const offset = elements.engineArcLength * (1 - health);
-        elements.engineProgress.className = `arc-progress ${health < 0.2 ? 'red' : health < 0.5 ? 'yellow' : 'white'}`;
-        elements.engineProgress.style.strokeDashoffset = offset;
-    }
-
-    function setGear(gear) {
-        let displayGear;
-        const isMoving = rawSpeedInMetersPerSecond > 0.1;
-        if (gear === 0) {
-            displayGear = 'R';
-        } else if (gear === 1) {
-            if (isMoving) {
-                displayGear = 1;
-            } else {
-                displayGear = 'N';
+                const number = document.createElement('div');
+                number.className = 'scale-number';
+                number.textContent = i + 1;
+                const angleRad = (angleDeg - 90) * Math.PI / 180;
+                const x = CENTER + NUMBER_RADIUS * Math.cos(angleRad);
+                const y = CENTER + NUMBER_RADIUS * Math.sin(angleRad);
+                number.style.left = `${x}px`;
+                number.style.top = `${y}px`;
+                scaleMarks.appendChild(number);
             }
-        } else if (gear >= 2) {
-            displayGear = gear - 1;
-        } else {
-            displayGear = 'N';
         }
-        elements.gearValue.innerText = displayGear;
-    }
 
-    function setHeadlights(state) {
-        const on = state > 0;
-        const highBeam = state === 2;
-        elements.headlightsIcon.classList.toggle('on', on);
-        elements.headlightsIcon.classList.toggle('high-beam', highBeam);
-    }
-
-    function setLeftIndicator(state) {
-        elements.leftIndicator.classList.toggle('on', state);
-        elements.leftIndicator.classList.toggle('blinking', state);
-    }
-
-    function setRightIndicator(state) {
-        elements.rightIndicator.classList.toggle('on', state);
-        elements.rightIndicator.classList.toggle('blinking', state);
-    }
-
-    function setSeatbelts(state) {
-        elements.seatbeltIcon.classList.toggle('on', state);
-    }
-
-    function setSpeedMode(mode) {
-        speedMode = mode;
-    }
-
-    document.addEventListener('DOMContentLoaded', initializeUI);
- </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Samsung Dashboard</title>
-<style>
-body {
-  margin: 0;
-  background: transparent;
-  font-family: "Segoe UI", sans-serif;
-}
-
-/* ===== TABLET FRAME ===== */
-.tablet {
-  position: fixed;
-  bottom: 3%;
-  left: 50%;
-  transform: translateX(-50%) translateY(100%);
-  width: 720px;
-  height: 420px;
-  background: #0b0f1a;
-  border-radius: 28px;
-  border: 3px solid #1f2937;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
-  overflow: hidden;
-  z-index: 9999;
-  transition: transform 0.4s ease;
-}
-
-.tablet.show {
-  transform: translateX(-50%) translateY(0);
-}
-
-/* ===== STATUS BAR ===== */
-.status-bar {
-  height: 32px;
-  background: linear-gradient(90deg, #000, #0f172a);
-  color: #9ca3af;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 14px;
-  font-size: 13px;
-  cursor: pointer; /* bisa di klik */
-}
-
-/* ===== SCREEN ===== */
-.screen {
-  width: 100%;
-  height: calc(100% - 72px);
-  position: relative;
-  background: url('https://images.unsplash.com/photo-1518770660439-4636190af475') center/cover;
-}
-
-/* ===== HOMEPAGE ===== */
-.homepage, .app-screen {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  backdrop-filter: blur(6px);
-  background: rgba(0,0,0,0.4);
-  transition: 0.4s;
-}
-
-.homepage h1 {
-  color: white;
-  font-size: 28px;
-  letter-spacing: 2px;
-}
-
-.home-btn {
-  margin-top: 16px;
-  padding: 12px 28px;
-  border-radius: 30px;
-  border: none;
-  background: linear-gradient(135deg, #00ff9c, #00b4ff);
-  color: black;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.home-btn:hover {
-  transform: scale(1.05);
-}
-
-/* ===== MENU TESLA ===== */
-.menu {
-  position: absolute;
-  inset: 0;
-  display: none;
-  padding: 20px;
-  color: white;
-}
-
-.menu-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.app {
-  background: rgba(255,255,255,0.08);
-  border-radius: 18px;
-  padding: 16px;
-  text-align: center;
-  transition: 0.2s;
-  cursor: pointer;
-}
-
-.app:hover {
-  background: rgba(0,255,156,0.2);
-  transform: translateY(-4px);
-}
-
-.app i {
-  font-size: 28px;
-  display: block;
-  margin-bottom: 8px;
-}
-
-/* ===== TESLA DOCK (BOTTOM BAR) ===== */
-.dock {
-  height: 40px;
-  background: linear-gradient(90deg, #020617, #020617);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 40px;
-  border-top: 1px solid #1f2937;
-}
-
-/* ===== NAV BUTTON ===== */
-.nav-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.1);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #9ca3af;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.nav-btn:hover {
-  background: rgba(0,255,156,0.3);
-  color: #00ff9c;
-}
-
-/* ===== EMBEDDED IFRAME ===== */
-.app-screen iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  border-radius: 0;
-}
-
-/* ===== YOUTUBE SEARCH PANEL ===== */
-#yt-search-panel {
-  position: absolute;
-  top: 10%;
-  left: 10%;
-  width: 80%;
-  height: 60%;
-  background: rgba(0,0,0,0.85);
-  color: white;
-  padding: 12px;
-  overflow: auto;
-  display: none;
-  border-radius: 16px;
-  z-index: 999;
-}
-
-#yt-search-panel input {
-  width: 70%;
-  padding: 6px;
-  border-radius: 6px;
-  border: none;
-}
-
-#yt-search-panel button {
-  padding: 6px 12px;
-  border-radius: 6px;
-  margin-left: 6px;
-  cursor: pointer;
-}
-
-.search-item {
-  padding: 8px;
-  cursor: pointer;
-  border-bottom: 1px solid #333;
-  display: flex;
-  align-items: center;
-}
-
-.search-item img {
-  margin-right: 8px;
-}
-/* ===================== THEME ADD-ON ===================== */
-
-/* Default fallback */
-body.theme-dark {}
-
-/* ================= CYBERPUNK ================= */
-body.theme-cyberpunk .speedometer{
-  background: radial-gradient(circle,#2b0033 0%,#000000 100%) !important;
-}
-body.theme-cyberpunk .speed-value{
-  color:#ff00ff !important;
-  text-shadow:0 0 20px #ff00ff !important;
-}
-body.theme-cyberpunk .rpm-progress{
-  stroke:#ff00ff !important;
-  filter:drop-shadow(0 0 10px #ff00ff);
-}
-body.theme-cyberpunk .screen{
-  background:url('https://img.freepik.com/free-photo/illustration-rain-futuristic-city_23-2151406566.jpg?semt=ais_hybrid&w=740&q=80') center/cover !important;
-}
-
-/* ================= SOFT AESTHETIC ================= */
-body.theme-soft .speedometer{
-  background: radial-gradient(circle,#ffe4f2 0%,#ffc2e2 100%) !important;
-}
-body.theme-soft .speed-value{
-  color:#ff69b4 !important;
-  text-shadow:0 0 15px #ff69b4 !important;
-}
-body.theme-soft .rpm-progress{
-  stroke:#ff69b4 !important;
-}
-body.theme-soft .screen{
-  background:url('https://www.pixelstalk.net/wp-content/uploads/images6/Girly-Desktop-Wallpaper-Cute.jpg') center/cover !important;
-}
-
-/* ================= Matias ================= */
-body.theme-matias .speedometer{
-  background: radial-gradient(circle,#0f2027,#203a43,#2c5364) !important;
-}
-body.theme-matias .speed-value{
-  color:#020202 !important;
-  text-shadow:0 0 15px #38bdf8;
-}
-body.theme-matias .rpm-progress{
-  stroke:#283825 !important;
-}
-body.theme-matias .screen{
-  background:url('https://p4.wallpaperbetter.com/wallpaper/214/127/766/card-casino-the-magician-hd-wallpaper-preview.jpg') center/cover !important;
-}
-/* ================= MIDNIGHT BLUE ================= */
-body.theme-midnight .speedometer{
-  background: radial-gradient(circle,#0f2027,#203a43,#2c5364) !important;
-}
-body.theme-midnight .speed-value{
-  color:#38bdf8 !important;
-  text-shadow:0 0 15px #38bdf8;
-}
-body.theme-midnight .rpm-progress{
-  stroke:#38bdf8 !important;
-}
-body.theme-midnight .screen{
-  background:url('https://c4.wallpaperflare.com/wallpaper/998/700/928/anime-art-boat-night-water-wallpaper-preview.jpg') center/cover !important;
-}
-
-/* ================= BLOOD RED ================= */
-body.theme-blood .speedometer{
-  background: radial-gradient(circle,#3b0000,#000000) !important;
-}
-body.theme-blood .speed-value{
-  color:#ff0000 !important;
-  text-shadow:0 0 20px #ff0000;
-}
-body.theme-blood .rpm-progress{
-  stroke:#ff0000 !important;
-}
-body.theme-blood .screen{
-  background:url('https://c4.wallpaperflare.com/wallpaper/84/210/374/soviet-union-ussr-war-artwork-wallpaper-preview.jpg') center/cover !important;
-}
-
-
-/* ================= SETTINGS BUTTON STYLE ================= */
-.theme-option{
-  margin:10px 0;
-  padding:12px;
-  background:rgba(255,255,255,0.08);
-  border-radius:12px;
-  text-align:center;
-  cursor:pointer;
-  transition:0.2s;
-}
-.theme-option:hover{
-  background:rgba(0,255,156,0.3);
-}
-.menu,
-#settingsScreen {
-  overflow-y: auto;
-}
-
-</style>
-</head>
-<body>
-
-<div class="tablet" id="tablet">
-  <!-- STATUS BAR -->
-  <div class="status-bar" onclick="toggleTablet()">Matias • Store 🔋 100% • 📶 5G</div>
-
-  <!-- SCREEN -->
-  <div class="screen">
-    <div class="app-screen" id="settingsScreen" style="display:none;flex-direction:column;padding:20px;color:white;">
-  <h2>Theme Settings</h2>
-
-  <div class="theme-option" onclick="setTheme('theme-dark')">🌙 Dark Default</div>
-  <div class="theme-option" onclick="setTheme('theme-cyberpunk')">🩸 Cyberpunk</div>
-  <div class="theme-option" onclick="setTheme('theme-soft')">🌸 Soft Aesthetic</div>
-  <div class="theme-option" onclick="setTheme('theme-matias')">🖕 Matias Special</div>
-  <div class="theme-option" onclick="setTheme('theme-midnight')">🌌 Midnight Blue</div>
-  <div class="theme-option" onclick="setTheme('theme-blood')">🩸 Blood Red</div>
-
-</div>
-
-    
-    <!-- HOMEPAGE -->
-    <div class="homepage" id="homePage">
-      <h1>Hi Matias</h1>
-      <button class="home-btn" onclick="openMenu()">OPEN DASHBOARD</button>
-    </div>
-
-    <!-- MENU -->
-    <div class="menu" id="menuPage">
-      <div class="menu-grid">
-        <div class="app" onclick="openApp('vehicle')">🚗<br>Vehicle</div>
-        <div class="app" onclick="openApp('gps')">🗺️<br>GPS</div>
-        <div class="app" onclick="openApp('music')">🎵<br>Music</div>
-        <div class="app" onclick="openApp('phone')">📞<br>Phone</div>
-        <div class="app" onclick="openApp('settings')">⚙️<br>Settings</div>
-        <div class="app" onclick="openApp('chat')">💬<br>Chat</div>
-        <div class="app" onclick="openApp('radio')">📡<br>Radio</div>
-        <div class="app" onclick="openApp('camera')">📷<br>Camera</div>
-        <div class="app" onclick="openApp('youtube')">▶️<br>YouTube</div>
-        <div class="app" onclick="openApp('agro')">🌱<br>Agroventura</div>
-      </div>
-    </div>
-
-    <!-- APP SCREEN -->
-    <div class="app-screen" id="appScreen" style="display:none;">
-      <iframe id="appIframe" src=""></iframe>
-    </div>
-
-    <!-- YOUTUBE SEARCH PANEL -->
-    <div id="yt-search-panel">
-      <input type="text" id="yt-search-input" placeholder="Search YouTube...">
-      <button id="yt-search-btn">Search</button>
-      <button id="yt-search-close" style="position:absolute; top:8px; right:12px;">❌</button>
-      <div id="yt-search-results" style="margin-top:12px;"></div>
-    </div>
-
-  </div>
-
-  <!-- TESLA NAV BAR -->
-  <div class="dock">
-    <div class="nav-btn" onclick="goBack()">⟵</div>
-    <div class="nav-btn" onclick="goHome()">●</div>
-    <div class="nav-btn" onclick="closeTablet()">▢</div>
-  </div>
-</div>
-
-<script>
-// ===== BASIC TABLET NAV =====
-function openMenu() {
-  document.getElementById("homePage").style.display = "none";
-  document.getElementById("menuPage").style.display = "block";
-}
-function goHome() {
-  document.getElementById("homePage").style.display = "flex";
-  document.getElementById("menuPage").style.display = "none";
-  document.getElementById("appScreen").style.display = "none";
-}
-function goBack() { goHome(); }
-function toggleTablet() {
-  document.getElementById("tablet").classList.toggle("show");
-}
-function closeTablet() {
-  document.getElementById("tablet").classList.remove("show");
-}
-
-// ===== OPEN APP EMBEDDED =====
-function openApp(app) {
-  const iframe = document.getElementById('appIframe');
-  const appScreen = document.getElementById('appScreen');
-  document.getElementById('homePage').style.display = 'none';
-  document.getElementById('menuPage').style.display = 'none';
-  appScreen.style.display = 'flex';
-  
-  if(app === 'youtube') {
-    iframe.src = "https://www.youtube.com/embed/?enablejsapi=1&rel=0";
-    TeslaYT.init();
-
-    // Tambah tombol search di YouTube
-    if(!document.getElementById('yt-search-btn-floating')){
-      const btn = document.createElement('button');
-      btn.id = 'yt-search-btn-floating';
-      btn.innerText = '🔍 Search';
-      btn.style.position = 'absolute';
-      btn.style.top = '12px';
-      btn.style.right = '12px';
-      btn.style.padding = '6px 12px';
-      btn.style.borderRadius = '8px';
-      btn.style.background = 'rgba(0,255,156,0.2)';
-      btn.style.color = 'white';
-      btn.style.border = 'none';
-      btn.style.cursor = 'pointer';
-      btn.style.zIndex = '1000';
-      btn.onclick = ()=>{ document.getElementById('yt-search-panel').style.display='block'; };
-      document.getElementById('appScreen').appendChild(btn);
-    }
-
-  } else if(app === 'agro') {
-    iframe.src = 'https://Agroventura.site/ladang.php';
-    // hapus tombol search kalau sebelumnya ada
-    const oldBtn = document.getElementById('yt-search-btn-floating');
-    if(oldBtn) oldBtn.remove();
-  } else {
-    iframe.src = 'about:blank';
-    const oldBtn = document.getElementById('yt-search-btn-floating');
-    if(oldBtn) oldBtn.remove();
-  }
-}
-
-
-// ===== YOUTUBE PLAYER + SEARCH =====
-const TeslaYT = (function(){
-  let iframe = document.getElementById('appIframe');
-  let player = null;
-  let apiLoaded = false;
-
-  function loadAPI() {
-    if(apiLoaded) return;
-    apiLoaded = true;
-    const s = document.createElement('script');
-    s.src = "https://www.youtube.com/iframe_api";
-    s.async = true;
-    document.head.appendChild(s);
-  }
-
-  function createPlayer(){
-    if(!iframe) return;
-    player = new YT.Player(iframe, {
-      host: 'https://www.youtube.com',
-      videoId: '',
-      playerVars:{autoplay:0,controls:1,rel:0,playsinline:1,origin:window.location.origin,enablejsapi:1},
-      events:{
-        onReady:function(){ try{ player.setVolume(20); }catch(e){} },
-        onStateChange:function(e){ /* optional console.log(e.data) */ },
-        onError:function(e){ console.warn("YT Error:", e.data); }
-      }
-    });
-  }
-
-  function parseId(url){
-    if(!url) return null;
-    const p=[/(?:v=|vi=)([A-Za-z0-9_-]{11})/,/youtu\.be\/([A-Za-z0-9_-]{11})/,/youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/,/youtube\.com\/live\/([A-Za-z0-9_-]{11})/];
-    for(let r of p){ const m = url.match(r); if(m&&m[1]) return m[1]; }
-    const m2 = url.match(/([A-Za-z0-9_-]{11})/); return m2?m2[1]:null;
-  }
-
-  return {
-    init: function(){ loadAPI(); },
-    loadVideo: function(url){
-      const id = parseId(url);
-      if(!id) return;
-      if(player) player.loadVideoById(id);
-      else iframe.src = "https://www.youtube.com/embed/"+id+"?enablejsapi=1&rel=0&autoplay=0";
-    },
-    play: function(){ if(player) player.playVideo(); },
-    pause:function(){ if(player) player.pauseVideo(); },
-    setVolume:function(v){
-      if(player){ v=Math.max(0,Math.min(100,parseInt(v||0))); player.setVolume(v); if(v===0 && player.mute) player.mute(); else if(v>0 && player.unMute) player.unMute(); }
-    },
-    searchPanel:function(){ document.getElementById('yt-search-panel').style.display='block'; }
-  };
-})();
-
-// ===== YOUTUBE SEARCH PANEL =====
-(function(){
-  const input = document.getElementById('yt-search-input');
-  const btn = document.getElementById('yt-search-btn');
-  const results = document.getElementById('yt-search-results');
-  const closeBtn = document.getElementById('yt-search-close');
-  const API_KEY = "AIzaSyBlRhTTd2jWkk5tG570qRFyuhRKqWnGgL0Y"; // ganti sendiri
-
-  closeBtn.addEventListener('click', ()=>{ document.getElementById('yt-search-panel').style.display='none'; });
-
-  function makeItem(video){
-    const div = document.createElement('div'); div.className='search-item';
-    div.innerHTML = `<img src="${video.snippet.thumbnails.default.url}"><span>${video.snippet.title}</span>`;
-    div.onclick = ()=>{ TeslaYT.loadVideo(video.id.videoId); document.getElementById('yt-search-panel').style.display='none'; };
-    return div;
-  }
-
-  async function searchYT(q){
-    results.innerHTML="Loading...";
-    try{
-      const resp = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(q)}&key=${API_KEY}`);
-      const data = await resp.json();
-      results.innerHTML = "";
-      (data.items||[]).forEach(v=>{ results.appendChild(makeItem(v)); });
-    }catch(e){ results.innerHTML="Error"; console.warn(e); }
-  }
-
-  btn.addEventListener('click', ()=>{ const q=input.value.trim(); if(q) searchYT(q); });
-})();
-/* ===================== THEME SYSTEM ===================== */
-
-function setTheme(themeName){
-  document.body.className = "";
-  document.body.classList.add(themeName);
-  localStorage.setItem('tabletTheme', themeName);
-}
-
-function loadTheme(){
-  const saved = localStorage.getItem('tabletTheme');
-  if(saved){
-    document.body.classList.add(saved);
-  } else {
-    document.body.classList.add('theme-dark');
-  }
-}
-
-loadTheme();
-
-/* ================= SAFE SETTINGS FIX ================= */
-
-const originalOpenApp = openApp;
-
-openApp = function(app){
-
-  // selalu hide settings dulu
-  const settings = document.getElementById('settingsScreen');
-  if(settings) settings.style.display = 'none';
-
-  if(app === 'settings'){
-    document.getElementById('homePage').style.display='none';
-    document.getElementById('menuPage').style.display='none';
-    document.getElementById('appScreen').style.display='none';
-    settings.style.display='flex';
-    return;
-  }
-
-  originalOpenApp(app);
-};
-
-/* Tambahan: kalau ada tombol back/home, paksa hide */
-document.addEventListener("click", function(e){
-  if(e.target.classList.contains("back-btn") ||
-     e.target.classList.contains("home-btn")){
-    const settings = document.getElementById('settingsScreen');
-    if(settings) settings.style.display = 'none';
-  }
-});
-
-
-</script>
-
+        function updateRPMAnimation() {
+            let finalRPMToShow;
+            const isIdle = isEngineOn && rawSpeedInMetersPerSecond < 0.1 && targetRPM < 0.15;
+
+            if (isIdle) {
+                const idleFluctuation = Math.sin(Date.now() * IDLE_FLUCTUATION_SPEED) * IDLE_FLUCTUATION_AMOUNT;
+                finalRPMToShow = targetRPM + idleFluctuation;
+                currentRPM = finalRPMToShow;
+            } else {
+                currentRPM += (targetRPM - currentRPM) * RPM_SMOOTHNESS;
+                finalRPMToShow = currentRPM;
+            }
+            
+            finalRPMToShow = Math.max(0, Math.min(1, finalRPMToShow));
+            if (elements.rpmSolidBar) {
+                const offset = elements.rpmFullLength * (1 - finalRPMToShow);
+                elements.rpmSolidBar.style.strokeDashoffset = offset;
+            }
+            requestAnimationFrame(updateRPMAnimation);
+        }
+
+        function setEngine(state) {
+            isEngineOn = state;
+            elements.healthIcon.classList.toggle('engine-on', state);
+        }
+
+        function setSpeed(speed) {
+            rawSpeedInMetersPerSecond = speed;
+            let convertedSpeed = 0, unit = 'KMH';
+            switch(speedMode) {
+                case 1: convertedSpeed = Math.round(speed * 2.236936); unit = 'MPH'; break;
+                case 2: convertedSpeed = Math.round(speed * 1.943844); unit = 'Knots'; break;
+                default: convertedSpeed = Math.round(speed * 3.6); unit = 'KMH';
+            }
+            elements.speedValue.innerText = convertedSpeed;
+            elements.speedUnit.innerText = unit;
+        }
+
+        function setRPM(rpm) { targetRPM = Math.max(0, Math.min(1, rpm)); }
+        function setFuel(fuel) {
+            const offset = elements.fuelArcLength * (1 - fuel);
+            elements.fuelProgress.className = `arc-progress ${fuel < 0.2 ? 'red' : fuel < 0.5 ? 'yellow' : 'white'}`;
+            elements.fuelProgress.style.strokeDashoffset = offset;
+        }
+        function setHealth(health) {
+            const offset = elements.engineArcLength * (1 - health);
+            elements.engineProgress.className = `arc-progress ${health < 0.2 ? 'red' : health < 0.5 ? 'yellow' : 'white'}`;
+            elements.engineProgress.style.strokeDashoffset = offset;
+        }
+        function setGear(gear) {
+            let displayGear;
+            const isMoving = rawSpeedInMetersPerSecond > 0.1;
+            if (gear === 0) displayGear = 'R';
+            else if (gear === 1) displayGear = isMoving ? 1 : 'N';
+            else if (gear >= 2) displayGear = gear - 1;
+            else displayGear = 'N';
+            elements.gearValue.innerText = displayGear;
+        }
+        function setHeadlights(state) {
+            elements.headlightsIcon.classList.toggle('on', state > 0);
+            elements.headlightsIcon.classList.toggle('high-beam', state === 2);
+        }
+        function setLeftIndicator(state) {
+            elements.leftIndicator.classList.toggle('on', state);
+            elements.leftIndicator.classList.toggle('blinking', state);
+        }
+        function setRightIndicator(state) {
+            elements.rightIndicator.classList.toggle('on', state);
+            elements.rightIndicator.classList.toggle('blinking', state);
+        }
+        function setSeatbelts(state) { elements.seatbeltIcon.classList.toggle('on', state); }
+        function setSpeedMode(mode) { speedMode = mode; }
+
+        // === TABLET LOGIC ===
+        function openMenu() {
+            document.getElementById("homePage").style.display = "none";
+            document.getElementById("menuPage").style.display = "block";
+        }
+        function goHome() {
+            document.getElementById("homePage").style.display = "flex";
+            document.getElementById("menuPage").style.display = "none";
+            document.getElementById("appScreen").style.display = "none";
+            document.getElementById('settingsScreen').style.display = 'none';
+        }
+        function goBack() { goHome(); }
+        function toggleTablet() { document.getElementById("tablet").classList.toggle("show"); }
+        function closeTablet() { document.getElementById("tablet").classList.remove("show"); }
+
+        function openApp(app) {
+            const iframe = document.getElementById('appIframe');
+            const appScreen = document.getElementById('appScreen');
+            const settings = document.getElementById('settingsScreen');
+            
+            settings.style.display = 'none';
+            document.getElementById('homePage').style.display = 'none';
+            document.getElementById('menuPage').style.display = 'none';
+            
+            if(app === 'settings'){
+                settings.style.display='flex';
+                appScreen.style.display='none';
+                return;
+            }
+
+         appScreen.style.display = 'flex';
+        
+        if(app === 'youtube') {
+            iframe.src = "https://www.youtube.com/embed/?enablejsapi=1&rel=0";
+            TeslaYT.init();
+            if(!document.getElementById('yt-search-btn-floating')){
+                const btn = document.createElement('button');
+                btn.id = 'yt-search-btn-floating';
+                btn.innerText = '🔍 Search';
+                btn.style.cssText = 'position:absolute; top:12px; right:12px; padding:6px 12px; border-radius:8px; background:rgba(0,255,156,0.2); color:white; border:none; cursor:pointer; z-index:1000;';
+                btn.onclick = ()=>{ document.getElementById('yt-search-panel').style.display='block'; };
+                appScreen.appendChild(btn);
+            }
+        } else if(app === 'radio') { 
+            iframe.src = 'https://radio.garden/visit/jakarta/N3R6fXN-';
+            const oldBtn = document.getElementById('yt-search-btn-floating');
+            if(oldBtn) oldBtn.remove();
+            
+        } else if(app === 'agro') {
+            iframe.src = 'https://Agroventura.site/ladang.php';
+            const oldBtn = document.getElementById('yt-search-btn-floating');
+            if(oldBtn) oldBtn.remove();
+            
+        } else {
+            iframe.src = 'about:blank';
+            const oldBtn = document.getElementById('yt-search-btn-floating');
+            if(oldBtn) oldBtn.remove();
+        }
+        }
+
+        const TeslaYT = (function(){
+            let iframe = document.getElementById('appIframe');
+            let player = null, apiLoaded = false;
+            function loadAPI() {
+                if(apiLoaded) return;
+                apiLoaded = true;
+                const s = document.createElement('script');
+                s.src = "https://www.youtube.com/iframe_api";
+                s.async = true;
+                document.head.appendChild(s);
+            }
+            function parseId(url){
+                if(!url) return null;
+                const p=[/(?:v=|vi=)([A-Za-z0-9_-]{11})/,/youtu\.be\/([A-Za-z0-9_-]{11})/,/youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/,/youtube\.com\/live\/([A-Za-z0-9_-]{11})/];
+                for(let r of p){ const m = url.match(r); if(m&&m[1]) return m[1]; }
+                const m2 = url.match(/([A-Za-z0-9_-]{11})/); return m2?m2[1]:null;
+            }
+            return {
+                init: function(){ loadAPI(); },
+                loadVideo: function(url){
+                    const id = parseId(url);
+                    if(!id) return;
+                    if(player) player.loadVideoById(id);
+                    else iframe.src = "https://www.youtube.com/embed/"+id+"?enablejsapi=1&rel=0&autoplay=0";
+                }
+            };
+        })();
+
+        // YouTube Search logic
+        (function(){
+            const input = document.getElementById('yt-search-input');
+            const btn = document.getElementById('yt-search-btn');
+            const results = document.getElementById('yt-search-results');
+            const closeBtn = document.getElementById('yt-search-close');
+            const API_KEY = "AIzaSyCOykyhBbi8s2RLLxa4PHyc0sTmM5by4K4";
+
+            closeBtn.addEventListener('click', ()=>{ document.getElementById('yt-search-panel').style.display='none'; });
+
+            async function searchYT(q){
+                results.innerHTML="Loading...";
+                try{
+                    const resp = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodeURIComponent(q)}&key=${API_KEY}`);
+                    const data = await resp.json();
+                    results.innerHTML = "";
+                    (data.items||[]).forEach(video=>{
+                        const div = document.createElement('div'); div.className='search-item';
+                        div.innerHTML = `<img src="${video.snippet.thumbnails.default.url}"><span>${video.snippet.title}</span>`;
+                        div.onclick = ()=>{ TeslaYT.loadVideo(video.id.videoId); document.getElementById('yt-search-panel').style.display='none'; };
+                        results.appendChild(div);
+                    });
+                }catch(e){ results.innerHTML="Error"; }
+            }
+            btn.addEventListener('click', ()=>{ const q=input.value.trim(); if(q) searchYT(q); });
+        })();
+
+        function setTheme(themeName){
+            document.body.className = themeName;
+            localStorage.setItem('tabletTheme', themeName);
+        }
+
+        window.onload = () => {
+            initializeUI();
+            const saved = localStorage.getItem('tabletTheme') || 'theme-dark';
+            document.body.className = saved;
+        };
+    </script>
 </body>
 </html>
