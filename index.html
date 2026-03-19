@@ -84,37 +84,22 @@
             stroke-width: 10;
             stroke-linecap: round;
         }
-        .rpm-progress {
+        /* CSS untuk RPM Progress */
+    .rpm-progress {
             fill: none;
-            stroke: #00ff9c; /* Warna default jika animasi gagal */
             stroke-width: 10;
             stroke-linecap: round;
-            filter: drop-shadow(0 0 8px rgba(0, 255, 156, 0.6));
-            transition: stroke 0.2s ease;
+            /* Transisi warna halus saat jarum bergerak */
+            transition: stroke 0.1s linear, filter 0.1s linear;
         }
-
-        /* Animasi RGB untuk RPM Tinggi (Redline) */
-        @keyframes rgb-redline {
-            0% { stroke: #ff0000; filter: drop-shadow(0 0 12px #ff0000); }
-            50% { stroke: #ff4500; filter: drop-shadow(0 0 15px #ff4500); }
-            100% { stroke: #ff0000; filter: drop-shadow(0 0 12px #ff0000); }
+        
+        /* Efek kedip khusus saat benar-benar mentok (Redline) */
+        @keyframes redline-blink {
+            50% { opacity: 0.5; stroke: #ff0000; filter: drop-shadow(0 0 15px #ff0000); }
         }
-
-        /* Animasi Pelangi Halus untuk RPM Normal */
-        @keyframes rpm-rgb-flow {
-            0% { stroke: #00ff9c; }
-            33% { stroke: #00b4ff; }
-            66% { stroke: #a855f7; }
-            100% { stroke: #00ff9c; }
-        }
-
-        .rpm-rgb-active {
-            animation: rpm-rgb-flow 3s linear infinite;
-        }
-
-        .rpm-high-active {
-            animation: rgb-redline 0.2s infinite !important;
-            stroke: #ff0000 !important;
+        
+        .redline-active {
+            animation: redline-blink 0.15s infinite;
         }
 
         .scale-marks { position: absolute; width: 100%; height: 100%; pointer-events: none; }
@@ -645,41 +630,42 @@
         }
 
        function updateRPMAnimation() {
-            let finalRPMToShow;
-            const isIdle = isEngineOn && rawSpeedInMetersPerSecond < 0.1 && targetRPM < 0.15;
-
-            if (isIdle) {
-                const idleFluctuation = Math.sin(Date.now() * IDLE_FLUCTUATION_SPEED) * IDLE_FLUCTUATION_AMOUNT;
-                finalRPMToShow = targetRPM + idleFluctuation;
-                currentRPM = finalRPMToShow;
-            } else {
-                currentRPM += (targetRPM - currentRPM) * RPM_SMOOTHNESS;
-                finalRPMToShow = currentRPM;
-            }
-            
-            finalRPMToShow = Math.max(0, Math.min(1, finalRPMToShow));
-
-            if (elements.rpmSolidBar) {
-                const offset = elements.rpmFullLength * (1 - finalRPMToShow);
-                elements.rpmSolidBar.style.strokeDashoffset = offset;
-
-                // LOGIKA WARNA RGB & MERAH
-                if (finalRPMToShow > 0.85) { 
-                    // Jika RPM di atas 85%, jadi Merah Berkedip
-                    elements.rpmSolidBar.classList.remove('rpm-rgb-active');
-                    elements.rpmSolidBar.classList.add('rpm-high-active');
-                } else if (finalRPMToShow > 0.1) {
-                    // Jika mesin nyala/jalan, pakai efek Pelangi
-                    elements.rpmSolidBar.classList.remove('rpm-high-active');
-                    elements.rpmSolidBar.classList.add('rpm-rgb-active');
-                } else {
-                    // Jika mati/idle rendah, balik ke warna statis
-                    elements.rpmSolidBar.classList.remove('rpm-high-active', 'rpm-rgb-active');
-                    elements.rpmSolidBar.style.stroke = "#ffffff";
-                }
-            }
-            requestAnimationFrame(updateRPMAnimation);
+        let finalRPMToShow;
+        const isIdle = isEngineOn && rawSpeedInMetersPerSecond < 0.1 && targetRPM < 0.15;
+    
+        if (isIdle) {
+            const idleFluctuation = Math.sin(Date.now() * IDLE_FLUCTUATION_SPEED) * IDLE_FLUCTUATION_AMOUNT;
+            finalRPMToShow = targetRPM + idleFluctuation;
+            currentRPM = finalRPMToShow;
+        } else {
+            currentRPM += (targetRPM - currentRPM) * RPM_SMOOTHNESS;
+            finalRPMToShow = currentRPM;
         }
+        
+        finalRPMToShow = Math.max(0, Math.min(1, finalRPMToShow));
+    
+        if (elements.rpmSolidBar) {
+            const offset = elements.rpmFullLength * (1 - finalRPMToShow);
+            elements.rpmSolidBar.style.strokeDashoffset = offset;
+    
+            // --- LOGIKA DYNAMIC COLOR GRADIENT ---
+            // Kita hitung Hue: 180 (Cyan) turun ke 0 (Merah)
+            // Formula: 180 - (RPM * 180)
+            let hue = 180 - (finalRPMToShow * 180); 
+            let color = `hsl(${hue}, 100%, 50%)`;
+            
+            elements.rpmSolidBar.style.stroke = color;
+            elements.rpmSolidBar.style.filter = `drop-shadow(0 0 12px ${color})`;
+    
+            // Efek tambahan kalau sudah mau putus (Redline > 90%)
+            if (finalRPMToShow > 0.90) {
+                elements.rpmSolidBar.classList.add('redline-active');
+            } else {
+                elements.rpmSolidBar.classList.remove('redline-active');
+            }
+        }
+        requestAnimationFrame(updateRPMAnimation);
+    }
            
 
         function setEngine(state) {
